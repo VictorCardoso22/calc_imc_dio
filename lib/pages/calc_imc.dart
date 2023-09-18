@@ -1,6 +1,7 @@
 class CalcImc {
   String valorImc = '';
   String valorReferencia = '';
+  List<Map<String, String>> dataList = [];
 
   calculaImc({required double peso, required double altura}) {
     if (peso <= 0 || altura <= 0) {
@@ -12,6 +13,12 @@ class CalcImc {
 
     // Calcula o IMC
     double imc = peso / (altura * altura);
+
+    dataList.add({
+      "peso": peso.toString(),
+      "altura": altura.toString(),
+      "imc": imc.toStringAsFixed(2),
+    });
 
     try {
       valorImc = "IMC: ${imc.toStringAsFixed(2)}";
