@@ -1,8 +1,11 @@
+import 'package:calc_imc_dio/repositories/imc_database.dart';
 import 'package:flutter/material.dart';
 
 import 'pages/calc_imc_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ImcDatabase().iniciarBD();
   runApp(const MyApp());
 }
 

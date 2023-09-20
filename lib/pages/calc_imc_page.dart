@@ -1,4 +1,6 @@
+import 'package:calc_imc_dio/model/imc_model.dart';
 import 'package:calc_imc_dio/pages/calc_imc.dart';
+import 'package:calc_imc_dio/repositories/imc_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +16,22 @@ class _CalcImcPageState extends State<CalcImcPage> {
   final TextEditingController _alturaController = TextEditingController();
   final TextEditingController _pesoController = TextEditingController();
 
+  ImcRepository imcRepository = ImcRepository();
+
+  List<ImcModel> _dados = [];
+
+  Future<List<ImcModel>> obterIMC() async {
+    _dados = await imcRepository.obterDados();
+    setState(() {});
+    return _dados;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    obterIMC();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,12 +39,12 @@ class _CalcImcPageState extends State<CalcImcPage> {
         title: const Text('Calculadora IMC'),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 32,
-            vertical: 60,
-          ),
-          child: SingleChildScrollView(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 32,
+              vertical: 60,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -67,7 +85,6 @@ class _CalcImcPageState extends State<CalcImcPage> {
                         altura: double.parse(_alturaController.text),
                         peso: double.parse(_pesoController.text),
                       );
-                      print(calc.dataList);
                       setState(() {});
                     },
                     child: const Text("Calcular")),
@@ -86,7 +103,9 @@ class _CalcImcPageState extends State<CalcImcPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(calc.valorImc),
+                      calc.valorImc == ''
+                          ? Text(calc.valorImc)
+                          : Text("Seu IMC é: ${calc.valorImc}"),
                       const SizedBox(
                         height: 12,
                       ),
@@ -99,40 +118,74 @@ class _CalcImcPageState extends State<CalcImcPage> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: 300,
-                  child: ListView.builder(
-                    itemCount: calc.dataList.length,
-                    itemBuilder: (context, index) {
-                      final value = calc.dataList[index];
-
-                      return ListTile(
-                        title: const Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text("IMC:"),
-                            Spacer(),
-                            Text("PESO:"),
-                            Spacer(),
-                            Text("ALTURA:"),
-                          ],
-                        ),
-                        subtitle: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(value['imc'].toString()),
-                            const Spacer(),
-                            Text(value['peso'].toString()),
-                            const Spacer(),
-                            Text(value['altura'].toString()),
-                          ],
+                FutureBuilder<List<ImcModel>>(
+                  future: obterIMC(),
+                  builder: (BuildContext context, snapshot) {
+                    if (snapshot.hasData) {
+                      final value = snapshot.data;
+                      return Container(
+                        color: Colors.white70,
+                        height: 300,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        child: ListView.builder(
+                          itemCount: value!.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              onLongPress: () => showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  title: const Text('Deseja excluir?'),
+                                  content: const Text(
+                                      'apertando ok, o registro será apagado definitivamento'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, 'Cancel'),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          Navigator.pop(context, 'OK');
+                                          imcRepository.delete(value[index].id);
+                                        });
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              title: const Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text("IMC:"),
+                                  Spacer(),
+                                  Text("PESO:"),
+                                  Spacer(),
+                                  Text("ALTURA:"),
+                                ],
+                              ),
+                              subtitle: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(value[index].imc.toStringAsFixed(2)),
+                                  const Spacer(),
+                                  Text("${value[index].peso.toString()}kg"),
+                                  const Spacer(),
+                                  Text("${value[index].altura.toString()}m"),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       );
-                    },
-                  ),
-                ),
+                    } else {
+                      return const CircularProgressIndicator();
+                    }
+                  },
+                )
               ],
             ),
           ),

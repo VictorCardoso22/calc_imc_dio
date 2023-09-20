@@ -1,9 +1,19 @@
+import 'dart:math';
+
+import 'package:calc_imc_dio/model/imc_model.dart';
+import 'package:calc_imc_dio/repositories/imc_repository.dart';
+import 'package:flutter/foundation.dart';
+
 class CalcImc {
+  ImcRepository imcRepository = ImcRepository();
+
   String valorImc = '';
   String valorReferencia = '';
-  List<Map<String, String>> dataList = [];
+  String altura = '';
+  String peso = '';
+  List<ImcModel> dataList = [];
 
-  calculaImc({required double peso, required double altura}) {
+  calculaImc({required double peso, required double altura}) async {
     if (peso <= 0 || altura <= 0) {
       valorReferencia =
           "O peso e a altura devem ser números positivos maiores que zero.";
@@ -13,15 +23,10 @@ class CalcImc {
 
     // Calcula o IMC
     double imc = peso / (altura * altura);
-
-    dataList.add({
-      "peso": peso.toString(),
-      "altura": altura.toString(),
-      "imc": imc.toStringAsFixed(2),
-    });
+    imcRepository.save(ImcModel(Random().nextInt(1000), altura, peso, imc));
 
     try {
-      valorImc = "IMC: ${imc.toStringAsFixed(2)}";
+      valorImc = imc.toStringAsFixed(2);
       if (imc <= 18.5) {
         valorReferencia =
             'Isso indica que a pessoa está abaixo do peso considerado saudável para sua altura. Pode sugerir desnutrição ou outros problemas de saúde.';
@@ -44,6 +49,7 @@ class CalcImc {
     } catch (e) {
       valorReferencia = "Erro: $e";
     }
-    return imc.toStringAsFixed(2);
+
+    return dataList;
   }
 }
